@@ -1,107 +1,220 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aswin's List Management</title>
+
 <style>
-:root{ --primary:#0d6efd; --bg:#ffffff; --text:#111; --card:#f4f4f4; }
-.dark{ --bg:#121212; --text:#fff; --card:#1e1e1e; }
-*{ box-sizing:border-box; }
-body{ margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--text); }/* Top App Bar */ .appbar{ position:sticky; top:0; z-index:10; background:var(--primary); color:#fff; padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,.2);} .appbar-top{ display:flex; align-items:center; justify-content:space-between; } .app-title{ font-weight:700; font-size:18px; } .app-actions button{ background:#fff; color:#000; }
+:root { --primary:#0d6efd; --bg:#fff; --text:#111; --card:#f4f4f4; }
+.dark { --bg:#121212; --text:#fff; --card:#1e1e1e; }
 
-.nav{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; } .nav button{ width:100%; }
+body { margin:0; font-family:Arial; background:var(--bg); color:var(--text); }
 
-button{ padding:10px; border:none; border-radius:10px; cursor:pointer; font-weight:600; } .container{ padding:15px; } input{ width:100%; margin:6px 0; padding:10px; border-radius:10px; border:1px solid #ccc; } .row{ display:flex; gap:10px; } .row input{ flex:1; } .card{ background:var(--card); padding:12px; border-radius:14px; margin:10px 0; box-shadow:0 2px 6px rgba(0,0,0,.15);} .hidden{ display:none; } table,th,td{ border:1px solid gray; border-collapse:collapse; padding:8px; } </style>
+.appbar { background:var(--primary); color:#fff; padding:10px; }
+.appbar-top { display:flex; justify-content:space-between; align-items:center; }
+.nav { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
 
+button { padding:10px; border:none; border-radius:10px; cursor:pointer; }
+.container { padding:15px; }
+input { width:100%; margin:5px 0; padding:10px; border-radius:10px; }
+
+.row { display:flex; gap:10px; }
+.card { background:var(--card); padding:10px; border-radius:12px; margin:10px 0; }
+
+.hidden { display:none; }
+table, th, td { border:1px solid gray; border-collapse:collapse; padding:8px; }
+</style>
 </head>
-<body><div class="appbar">
+
+<body>
+
+<div class="appbar">
   <div class="appbar-top">
-    <div class="app-title">Aswin's List Management</div>
-    <div class="app-actions">
-      <button onclick="toggleTheme()">🌙/☀️</button>
+    <b>Aswin's List Management</b>
+    <div>
+      <button onclick="toggleTheme()">🌙</button>
       <button onclick="location.reload()">⟳</button>
     </div>
   </div>
+
   <div class="nav">
     <button onclick="showPage(1)">Dashboard</button>
     <button onclick="showPage(2)">List</button>
     <button onclick="showPage(3)">Hourly</button>
   </div>
-</div><div id="page1" class="container">
-<h2>Dashboard</h2>
-<input id="name" placeholder="Enter Name">
-<input type="date" id="date">
-<div class="row">
-<input type="time" id="going">
-<input type="time" id="return">
 </div>
-<button onclick="addEntry()">➕ Add Entry</button><h3>Saved Entries</h3>
+
+<!-- PAGE 1 -->
+<div id="page1" class="container">
+<h2>Dashboard</h2>
+
+<input id="name" placeholder="Name">
+<input type="date" id="date">
+
+<div class="row">
+  <input type="time" id="going">
+  <input type="time" id="return">
+</div>
+
+<button onclick="addEntry()">Add</button>
+
+<h3>Saved Entries</h3>
 <div id="savedList"></div>
-</div><div id="page2" class="container hidden">
-<h2 id="tableTitle"></h2>
+</div>
+
+<!-- PAGE 2 -->
+<div id="page2" class="container hidden">
+<h2>Daily List</h2>
 <input type="date" id="filterDate" onchange="renderTable()">
 <div id="tableContainer"></div>
-<button onclick="shareWhatsApp()">📤 WhatsApp</button>
-<button onclick="downloadPDF()">📄 PDF</button>
-</div><div id="page3" class="container hidden">
+</div>
+
+<!-- PAGE 3 -->
+<div id="page3" class="container hidden">
 <h2>Hourly List</h2>
 <input type="date" id="hourlyDate" onchange="renderHourly()">
 <div id="hourlyContainer"></div>
-<button onclick="shareWhatsApp()">📤 WhatsApp</button>
-<button onclick="downloadPDF()">📄 PDF</button>
-</div><script>
-// element references FIRST (fix bug)
-const nameEl=document.getElementById('name');
-const dateEl=document.getElementById('date');
-const goingEl=document.getElementById('going');
-const returnEl=document.getElementById('return');
-const savedList=document.getElementById('savedList');
-const tableTitle=document.getElementById('tableTitle');
-const tableContainer=document.getElementById('tableContainer');
-const filterDate=document.getElementById('filterDate');
-const hourlyDate=document.getElementById('hourlyDate');
-const hourlyContainer=document.getElementById('hourlyContainer');
+</div>
 
-let data = JSON.parse(localStorage.getItem('rideData')) || [];
-function saveData(){ localStorage.setItem('rideData', JSON.stringify(data)); }
-function toggleTheme(){ document.body.classList.toggle('dark'); }
+<script>
+let data = [];
 
+// LOAD DATA
+window.onload = function(){
+  data = JSON.parse(localStorage.getItem('rideData')) || [];
+  renderSaved();
+};
+
+// SAVE
+function saveData(){
+  localStorage.setItem('rideData', JSON.stringify(data));
+}
+
+// THEME
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+}
+
+// NAVIGATION
 function showPage(p){
- document.getElementById('page1').classList.add('hidden');
- document.getElementById('page2').classList.add('hidden');
- document.getElementById('page3').classList.add('hidden');
- document.getElementById('page'+p).classList.remove('hidden');
- if(p===1) renderSaved();
- if(p===2) renderTable();
- if(p===3) renderHourly();
+  document.getElementById('page1').classList.add('hidden');
+  document.getElementById('page2').classList.add('hidden');
+  document.getElementById('page3').classList.add('hidden');
+  document.getElementById('page'+p).classList.remove('hidden');
 }
 
-function formatTime(t){ if(!t) return ''; let [h,m]=t.split(':'); let ampm=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+ampm; }
+// FORMAT TIME
+function formatTime(t){
+  if(!t) return '';
+  let [h,m]=t.split(':');
+  let ampm = h>=12 ? 'PM':'AM';
+  h = h%12 || 12;
+  return h+':'+m+' '+ampm;
+}
 
+// ADD ENTRY
 function addEntry(){
- let name=nameEl.value.trim(); let date=dateEl.value; let going=goingEl.value; let ret=returnEl.value;
- if(!name||!date) return alert('Fill required fields');
- data.push({name,date,going,ret}); saveData(); renderSaved(); clearInputs();
+  let name=document.getElementById('name').value;
+  let date=document.getElementById('date').value;
+  let going=document.getElementById('going').value;
+  let ret=document.getElementById('return').value;
+
+  if(!name || !date){
+    alert('Fill required fields');
+    return;
+  }
+
+  data.push({name,date,going,ret});
+  saveData();
+  renderSaved();
 }
 
-function clearInputs(){ nameEl.value=''; goingEl.value=''; returnEl.value=''; }
+// DELETE
+function deleteEntry(i){
+  data.splice(i,1);
+  saveData();
+  renderSaved();
+}
 
-function deleteEntry(i){ data.splice(i,1); saveData(); renderSaved(); }
-
+// SHOW SAVED
 function renderSaved(){
- let html='';
- data.forEach((d,i)=>{
- html+=`<div class='card'><b>${d.name}</b><br>${d.date}<br>Going: ${formatTime(d.going)} | Return: ${formatTime(d.ret)}<br>
- <button onclick='deleteEntry(${i})'>Delete</button></div>`;
- });
- savedList.innerHTML=html;
+  let html='';
+  data.forEach((d,i)=>{
+    html+=`<div class='card'>
+      ${d.name} | ${d.date}<br>
+      Going: ${formatTime(d.going)} | Return: ${formatTime(d.ret)}
+      <br><button onclick="deleteEntry(${i})">Delete</button>
+    </div>`;
+  });
+  document.getElementById('savedList').innerHTML=html;
 }
 
+// TABLE SORTED BY GOING TIME
 function renderTable(){
- let date=filterDate.value; if(!date) return;
- tableTitle.innerText=date;
- let html='<table><tr><th>Name</th><th>Going</th><th>Return</th></tr>';
- data.filter(d=>d.date===date).forEach(d=>{
+  let date=document.getElementById('filterDate').value;
+  if(!date) return;
+
+  let filtered = data.filter(d=>d.date===date);
+
+  filtered.sort((a,b)=>{
+    if(!a.going) return 1;
+    if(!b.going) return -1;
+    return a.going.localeCompare(b.going);
+  });
+
+  let html='<table><tr><th>Name</th><th>Going</th><th>Return</th></tr>';
+
+  filtered.forEach(d=>{
+    html+=`<tr>
+      <td>${d.name}</td>
+      <td>${formatTime(d.going)}</td>
+      <td>${formatTime(d.ret)}</td>
+    </tr>`;
+  });
+
+  html+='</table>';
+  document.getElementById('tableContainer').innerHTML=html;
+}
+
+// HOURLY (PAIRING)
+function renderHourly(){
+  let date=document.getElementById('hourlyDate').value;
+  if(!date) return;
+
+  let goingTimes=[];
+  let returnTimes=[];
+
+  data.filter(d=>d.date===date).forEach(d=>{
+    if(d.going) goingTimes.push(d.going);
+    if(d.ret) returnTimes.push(d.ret);
+  });
+
+  goingTimes=[...new Set(goingTimes)].sort();
+  returnTimes=[...new Set(returnTimes)].sort();
+
+  let html='';
+
+  goingTimes.forEach((g,i)=>{
+    let r=returnTimes[i];
+
+    let gNames=data.filter(d=>d.date===date && d.going===g).map(d=>d.name);
+    let rNames=r ? data.filter(d=>d.date===date && d.ret===r).map(d=>d.name) : [];
+
+    html+=`<div class='card'>
+      <b>${formatTime(g)}</b><br>
+      Going: ${gNames.join(', ') || '-'}<br><br>
+      <b>${r ? formatTime(r) : '-'}</b><br>
+      Return: ${rNames.join(', ') || '-'}
+    </div>`;
+  });
+
+  document.getElementById('hourlyContainer').innerHTML=html;
+}
+</script>
+
+</body>
+</html> data.filter(d=>d.date===date).forEach(d=>{
  html+=`<tr><td>${d.name}</td><td>${formatTime(d.going)}</td><td>${formatTime(d.ret)}</td></tr>`;
  });
  html+='</table>'; tableContainer.innerHTML=html;
