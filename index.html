@@ -50,6 +50,18 @@ button{ padding:10px; border:none; border-radius:10px; cursor:pointer; font-weig
 <button onclick="shareWhatsApp()">📤 WhatsApp</button>
 <button onclick="downloadPDF()">📄 PDF</button>
 </div><script>
+// element references FIRST (fix bug)
+const nameEl=document.getElementById('name');
+const dateEl=document.getElementById('date');
+const goingEl=document.getElementById('going');
+const returnEl=document.getElementById('return');
+const savedList=document.getElementById('savedList');
+const tableTitle=document.getElementById('tableTitle');
+const tableContainer=document.getElementById('tableContainer');
+const filterDate=document.getElementById('filterDate');
+const hourlyDate=document.getElementById('hourlyDate');
+const hourlyContainer=document.getElementById('hourlyContainer');
+
 let data = JSON.parse(localStorage.getItem('rideData')) || [];
 function saveData(){ localStorage.setItem('rideData', JSON.stringify(data)); }
 function toggleTheme(){ document.body.classList.toggle('dark'); }
