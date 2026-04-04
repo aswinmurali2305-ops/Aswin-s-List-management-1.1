@@ -54,10 +54,10 @@ table, th, td { border:1px solid gray; border-collapse:collapse; padding:8px; }
 
 <div class="row">
   <input type="time" id="going">
-  <input type="time" id="return">
+  <input type="time" id="returnTime">
 </div>
 
-<button onclick="addEntry()">Add</button>
+<button type="button" onclick="addEntry()">Add</button>
 
 <h3>Saved Entries</h3>
 <div id="savedList"></div>
@@ -82,7 +82,11 @@ let data = [];
 
 // LOAD DATA
 window.onload = function(){
-  data = JSON.parse(localStorage.getItem('rideData')) || [];
+  try {
+    data = JSON.parse(localStorage.getItem('rideData')) || [];
+  } catch(e){
+    data = [];
+  }
   renderSaved();
 };
 
@@ -102,6 +106,125 @@ function showPage(p){
   document.getElementById('page2').classList.add('hidden');
   document.getElementById('page3').classList.add('hidden');
   document.getElementById('page'+p).classList.remove('hidden');
+}
+
+// FORMAT TIME
+function formatTime(t){
+  if(!t) return '-';
+  let [h,m]=t.split(':');
+  let ampm = h>=12 ? 'PM':'AM';
+  h = h%12 || 12;
+  return h+':'+m+' '+ampm;
+}
+
+// ADD ENTRY
+function addEntry(){
+  let name=document.getElementById('name').value.trim();
+  let date=document.getElementById('date').value;
+  let going=document.getElementById('going').value;
+  let ret=document.getElementById('returnTime').value;
+
+  if(!name || !date){
+    alert('Please enter name and date');
+    return;
+  }
+
+  data.push({name,date,going,ret});
+  saveData();
+  renderSaved();
+
+  // clear inputs
+  document.getElementById('name').value='';
+  document.getElementById('going').value='';
+  document.getElementById('returnTime').value='';
+}
+
+// DELETE
+function deleteEntry(i){
+  data.splice(i,1);
+  saveData();
+  renderSaved();
+}
+
+// SHOW SAVED
+function renderSaved(){
+  let html='';
+  data.forEach((d,i)=>{
+    html+=`<div class='card'>
+      <b>${d.name}</b><br>
+      ${d.date}<br>
+      Going: ${formatTime(d.going)} | Return: ${formatTime(d.ret)}<br>
+      <button onclick="deleteEntry(${i})">Delete</button>
+    </div>`;
+  });
+  document.getElementById('savedList').innerHTML=html;
+}
+
+// TABLE SORTED
+function renderTable(){
+  let date=document.getElementById('filterDate').value;
+  if(!date) return;
+
+  let filtered = data.filter(d=>d.date===date);
+
+  filtered.sort((a,b)=>{
+    if(!a.going) return 1;
+    if(!b.going) return -1;
+    return a.going.localeCompare(b.going);
+  });
+
+  let html='<table><tr><th>Name</th><th>Going</th><th>Return</th></tr>';
+
+  filtered.forEach(d=>{
+    html+=`<tr>
+      <td>${d.name}</td>
+      <td>${formatTime(d.going)}</td>
+      <td>${formatTime(d.ret)}</td>
+    </tr>`;
+  });
+
+  html+='</table>';
+  document.getElementById('tableContainer').innerHTML=html;
+}
+
+// HOURLY PAIRING
+function renderHourly(){
+  let date=document.getElementById('hourlyDate').value;
+  if(!date) return;
+
+  let goingTimes=[];
+  let returnTimes=[];
+
+  data.filter(d=>d.date===date).forEach(d=>{
+    if(d.going) goingTimes.push(d.going);
+    if(d.ret) returnTimes.push(d.ret);
+  });
+
+  goingTimes=[...new Set(goingTimes)].sort();
+  returnTimes=[...new Set(returnTimes)].sort();
+
+  let html='';
+
+  goingTimes.forEach((g,i)=>{
+    let r=returnTimes[i];
+
+    let gNames=data.filter(d=>d.date===date && d.going===g).map(d=>d.name);
+    let rNames=r ? data.filter(d=>d.date===date && d.ret===r).map(d=>d.name) : [];
+
+    html+=`<div class='card'>
+      <b>${formatTime(g)}</b><br>
+      Going: ${gNames.join(', ') || '-'}<br><br>
+      <b>${r ? formatTime(r) : '-'}</b><br>
+      Return: ${rNames.join(', ') || '-'}
+    </div>`;
+  });
+
+  document.getElementById('hourlyContainer').innerHTML=html;
+}
+</script>
+
+</body>
+</html>  document.getElementById('page'+p).classList.remove('hidden');
 }
 
 // FORMAT TIME
